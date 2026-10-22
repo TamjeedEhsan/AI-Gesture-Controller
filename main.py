@@ -1,8 +1,14 @@
 import cv2
+import numpy as np
 from hand_tracking import HandTracker
 
 cap = cv2.VideoCapture(0)
 tracker = HandTracker()
+
+canvas = None
+prev = None                 # last fingertip position while drawing
+draw_color = (0, 0, 255)    # BGR, so this is red
+thickness = 6
 
 while True:
     success, frame = cap.read()
@@ -10,30 +16,39 @@ while True:
         break
     frame = cv2.flip(frame, 1)
 
+    if canvas is None:
+        canvas = np.zeros_like(frame)
+
     frame = tracker.find_hands(frame)
     lm = tracker.get_landmarks(frame)
 
     if lm:
         fingers = tracker.fingers_up(lm)
-        cv2.putText(frame, str(fingers), (20, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        x, y = lm[8][1], lm[8][2]   # index fingertip
 
-        if fingers == [0, 1, 0, 0, 0]:
-            gesture = "Pointing"
-        elif fingers == [0, 1, 1, 0, 0]:
-            gesture = "Two fingers"
-        elif fingers == [1, 1, 1, 1, 1]:
-            gesture = "Open palm"
-        elif sum(fingers) == 0:
-            gesture = "Fist"
+        # Pen down: index up, middle down (thumb is ignored, it's the least reliable)
+        if fingers[1] == 1 and fingers[2] == 0:
+            if prev is None:
+                prev = (x, y)
+            cv2.line(canvas, prev, (x, y), draw_color, thickness)
+            prev = (x, y)
+            cv2.circle(frame, (x, y), 10, draw_color, cv2.FILLED)
         else:
-            gesture = ""
-        cv2.putText(frame, gesture, (20, 100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            prev = None
+    else:
+        prev = None
+
+    # Overlay the canvas on the live frame
+    gray = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)
+    mask = gray > 0
+    frame[mask] = canvas[mask]
 
     cv2.imshow("Gesture Controller", frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
         break
+    elif key == ord('c'):
+        canvas = np.zeros_like(frame)
 
 cap.release()
 cv2.destroyAllWindows()
