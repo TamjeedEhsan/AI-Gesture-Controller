@@ -1,16 +1,8 @@
 import cv2
-import mediapipe as mp
-
-mp_hands = mp.solutions.hands
-mp_draw = mp.solutions.drawing_utils
-
-hands = mp_hands.Hands(
-    max_num_hands=1,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7,
-)
+from hand_tracking import HandTracker
 
 cap = cv2.VideoCapture(0)
+tracker = HandTracker()
 
 while True:
     success, frame = cap.read()
@@ -18,19 +10,26 @@ while True:
         break
     frame = cv2.flip(frame, 1)
 
-    # MediaPipe expects RGB, but OpenCV gives BGR
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = hands.process(rgb)
+    frame = tracker.find_hands(frame)
+    lm = tracker.get_landmarks(frame)
 
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+    if lm:
+        fingers = tracker.fingers_up(lm)
+        cv2.putText(frame, str(fingers), (20, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-            # Landmark coordinates are 0-1, so convert to pixels
-            h, w, _ = frame.shape
-            tip = hand_landmarks.landmark[8]
-            x, y = int(tip.x * w), int(tip.y * h)
-            cv2.circle(frame, (x, y), 10, (0, 255, 0), cv2.FILLED)
+        if fingers == [0, 1, 0, 0, 0]:
+            gesture = "Pointing"
+        elif fingers == [0, 1, 1, 0, 0]:
+            gesture = "Two fingers"
+        elif fingers == [1, 1, 1, 1, 1]:
+            gesture = "Open palm"
+        elif sum(fingers) == 0:
+            gesture = "Fist"
+        else:
+            gesture = ""
+        cv2.putText(frame, gesture, (20, 100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
     cv2.imshow("Gesture Controller", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
