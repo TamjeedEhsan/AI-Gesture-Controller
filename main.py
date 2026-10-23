@@ -3,14 +3,17 @@ import numpy as np
 from hand_tracking import HandTracker
 from color_picker import ColorPicker
 from virtual_keyboard import VirtualKeyboard
+from mouse_control import MouseController
 
 cap = cv2.VideoCapture(0)
 tracker = HandTracker()
 W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 picker = ColorPicker(W)
 keyboard = VirtualKeyboard(W)
+H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+mouse = MouseController(W, H)
 
-mode = "draw"      # "draw" or "keyboard"
+mode = "draw"   
 canvas = None
 prev = None
 
@@ -63,6 +66,14 @@ while True:
         else:
             keyboard.update(-1, -1, False)
         keyboard.draw(frame)
+    elif mode == "mouse":
+        mouse.draw(frame)
+        if lm:
+            x, y = lm[8][1], lm[8][2]
+            palm = tracker.distance(lm, 0, 9)
+            pinching = tracker.distance(lm, 4, 8) < 0.3 * palm
+            mouse.update(x, y, pinching)
+            cv2.circle(frame, (x, y), 8, (255, 0, 255), cv2.FILLED)
 
     cv2.putText(frame, f"Mode: {mode}", (10, frame.shape[0] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
@@ -77,6 +88,8 @@ while True:
         mode, prev = "draw", None
     elif key == ord('k'):
         mode, prev = "keyboard", None
+    elif key == ord('m'):
+        mode, prev = "mouse", None
 
 cap.release()
 cv2.destroyAllWindows()
