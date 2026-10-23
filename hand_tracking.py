@@ -48,3 +48,7 @@ class HandTracker:
         for tip in [8, 12, 16, 20]:
             fingers.append(1 if lm[tip][2] < lm[tip - 2][2] else 0)
         return fingers
+
+    def distance(self, lm, a, b):
+        """Pixel distance between landmarks a and b."""
+        return math.hypot(lm[a][1] - lm[b][1], lm[a][2] - lm[b][2])
