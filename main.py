@@ -5,6 +5,7 @@ from color_picker import ColorPicker
 from virtual_keyboard import VirtualKeyboard
 from mouse_control import MouseController
 from volume_control import VolumeController
+from zoom_control import ZoomController
 
 cap = cv2.VideoCapture(0)
 tracker = HandTracker()
@@ -14,6 +15,7 @@ keyboard = VirtualKeyboard(W)
 H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 mouse = MouseController(W, H)
 volume = VolumeController()
+zoom = ZoomController()
 
 mode = "draw"   
 canvas = None
@@ -93,6 +95,24 @@ while True:
                 cv2.circle(frame, p2, 8, color, cv2.FILLED)
             volume.draw(frame)
 
+    elif mode == "zoom":
+        if lm:
+            fingers = tracker.fingers_up(lm)
+            palm = tracker.distance(lm, 0, 9)
+            ratio = tracker.distance(lm, 4, 8) / palm
+            locked = fingers[4] == 1          # pinky up = lock the zoom
+
+            zoom.update(ratio, locked)
+
+            p1, p2 = (lm[4][1], lm[4][2]), (lm[8][1], lm[8][2])
+            color = (0, 0, 255) if locked else (0, 255, 0)
+            cv2.line(frame, p1, p2, color, 3)
+            cv2.circle(frame, p1, 8, color, cv2.FILLED)
+            cv2.circle(frame, p2, 8, color, cv2.FILLED)
+
+        frame = zoom.apply(frame)   # zoom last, after drawing the finger line
+        zoom.draw(frame)
+
     cv2.putText(frame, f"Mode: {mode}", (10, frame.shape[0] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
@@ -111,6 +131,8 @@ while True:
         mode, prev = "mouse", None
     elif key == ord('v'):
         mode, prev = "volume", None
+    elif key == ord('z'):
+        mode, prev = "zoom", None
 
 cap.release()
 cv2.destroyAllWindows()
