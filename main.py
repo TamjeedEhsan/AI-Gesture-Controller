@@ -4,6 +4,7 @@ from hand_tracking import HandTracker
 from color_picker import ColorPicker
 from virtual_keyboard import VirtualKeyboard
 from mouse_control import MouseController
+from volume_control import VolumeController
 
 cap = cv2.VideoCapture(0)
 tracker = HandTracker()
@@ -12,6 +13,7 @@ picker = ColorPicker(W)
 keyboard = VirtualKeyboard(W)
 H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 mouse = MouseController(W, H)
+volume = VolumeController()
 
 mode = "draw"   
 canvas = None
@@ -75,9 +77,26 @@ while True:
             mouse.update(x, y, pinching)
             cv2.circle(frame, (x, y), 8, (255, 0, 255), cv2.FILLED)
 
+    elif mode == "volume":
+            if lm:
+                fingers = tracker.fingers_up(lm)
+                palm = tracker.distance(lm, 0, 9)
+                ratio = tracker.distance(lm, 4, 8) / palm
+                locked = fingers[4] == 1          # pinky up = lock the volume
+    
+                volume.update(ratio, locked)
+    
+                p1, p2 = (lm[4][1], lm[4][2]), (lm[8][1], lm[8][2])
+                color = (0, 0, 255) if locked else (0, 255, 0)
+                cv2.line(frame, p1, p2, color, 3)
+                cv2.circle(frame, p1, 8, color, cv2.FILLED)
+                cv2.circle(frame, p2, 8, color, cv2.FILLED)
+            volume.draw(frame)
+
     cv2.putText(frame, f"Mode: {mode}", (10, frame.shape[0] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
+    
     cv2.imshow("Gesture Controller", frame)
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
@@ -90,6 +109,8 @@ while True:
         mode, prev = "keyboard", None
     elif key == ord('m'):
         mode, prev = "mouse", None
+    elif key == ord('v'):
+        mode, prev = "volume", None
 
 cap.release()
 cv2.destroyAllWindows()
