@@ -11,12 +11,30 @@ from volume_control import VolumeController
 from zoom_control import ZoomController
 from media_control import MediaController
 
-cap = cv2.VideoCapture(0)
-tracker = HandTracker()
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+# Set camera resolution to Full HD
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
+# Set FPS
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+# Check actual camera resolution
 W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+print(f"Camera Resolution: {W}x{H}")
+# Create a resizable window
+cv2.namedWindow("Gesture Controller", cv2.WINDOW_NORMAL)
+
+# Set initial window size
+cv2.resizeWindow("Gesture Controller", 1280, 800)
+tracker = HandTracker()
+#W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 picker = ColorPicker(W)
 keyboard = VirtualKeyboard(W)
-H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+#H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) 
 mouse = MouseController(W, H)
 volume = VolumeController()
 zoom = ZoomController()
