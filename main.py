@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import os
+import time
+from datetime import datetime
 from hand_tracking import HandTracker
 from color_picker import ColorPicker
 from virtual_keyboard import VirtualKeyboard
@@ -22,6 +25,10 @@ media = MediaController()
 mode = "draw"   
 canvas = None
 prev = None
+
+save_msg = ""
+save_time = 0
+os.makedirs("drawings", exist_ok=True)
 
 while True:
     success, frame = cap.read()
@@ -123,9 +130,12 @@ while True:
             media.update([0, 0, 0, 0, 0])   # no hand: reset the hold timer
         media.draw(frame)
 
-
     cv2.putText(frame, f"Mode: {mode}", (10, frame.shape[0] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+
+    if time.time() - save_time < 2:
+        cv2.putText(frame, save_msg, (10, frame.shape[0] - 45),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
     
     cv2.imshow("Gesture Controller", frame)
     key = cv2.waitKey(1) & 0xFF
@@ -145,6 +155,17 @@ while True:
         mode, prev = "zoom", None
     elif key == ord('p'):
         mode, prev = "media", None
+    elif key == ord('s'):
+            mask = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY) > 0
+            if mask.any():
+                out = cv2.cvtColor(canvas, cv2.COLOR_BGR2BGRA)        # add an alpha channel
+                out[:, :, 3] = mask.astype(np.uint8) * 255            # drawn = opaque, empty = transparent
+                name = datetime.now().strftime("drawings/drawing_%Y%m%d_%H%M%S.png")
+                cv2.imwrite(name, out)
+                save_msg, save_time = f"Saved {name}", time.time()
+            else:
+                save_msg, save_time = "Nothing to save", time.time()
+    
 
 cap.release()
 cv2.destroyAllWindows()
