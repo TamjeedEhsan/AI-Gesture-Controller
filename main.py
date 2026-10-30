@@ -6,6 +6,7 @@ from virtual_keyboard import VirtualKeyboard
 from mouse_control import MouseController
 from volume_control import VolumeController
 from zoom_control import ZoomController
+from media_control import MediaController
 
 cap = cv2.VideoCapture(0)
 tracker = HandTracker()
@@ -16,6 +17,7 @@ H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 mouse = MouseController(W, H)
 volume = VolumeController()
 zoom = ZoomController()
+media = MediaController()
 
 mode = "draw"   
 canvas = None
@@ -110,12 +112,20 @@ while True:
             cv2.circle(frame, p1, 8, color, cv2.FILLED)
             cv2.circle(frame, p2, 8, color, cv2.FILLED)
 
-        frame = zoom.apply(frame)   # zoom last, after drawing the finger line
+        frame = zoom.apply(frame)   
         zoom.draw(frame)
+
+    elif mode == "media":
+        if lm:
+            fingers = tracker.fingers_up(lm)
+            media.update(fingers)
+        else:
+            media.update([0, 0, 0, 0, 0])   # no hand: reset the hold timer
+        media.draw(frame)
+
 
     cv2.putText(frame, f"Mode: {mode}", (10, frame.shape[0] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-
     
     cv2.imshow("Gesture Controller", frame)
     key = cv2.waitKey(1) & 0xFF
@@ -133,6 +143,8 @@ while True:
         mode, prev = "volume", None
     elif key == ord('z'):
         mode, prev = "zoom", None
+    elif key == ord('p'):
+        mode, prev = "media", None
 
 cap.release()
 cv2.destroyAllWindows()

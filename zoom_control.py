@@ -3,7 +3,7 @@ import numpy as np
 
 
 class ZoomController:
-    def __init__(self, min_ratio=0.25, max_ratio=1.4, max_zoom=3.0):
+    def __init__(self, min_ratio=0.25, max_ratio=1.4, max_zoom=5.0):
         self.level = 1.0
         self.min_ratio, self.max_ratio = min_ratio, max_ratio
         self.max_zoom = max_zoom
