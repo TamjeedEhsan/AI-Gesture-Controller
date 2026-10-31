@@ -1,9 +1,7 @@
 import cv2
 
-
 class ColorPicker:
     def __init__(self, frame_width, height=70):
-        # (label, BGR color), the last one is the eraser
         self.colors = [
             ("red", (0, 0, 255)),
             ("blue", (255, 0, 0)),
@@ -40,6 +38,6 @@ class ColorPicker:
             if label == "eraser":
                 cv2.putText(frame, "ERASER", (x1 + 8, 42),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        # Highlight the selected box
+
         x1, x2 = self.selected * self.box_w, (self.selected + 1) * self.box_w
         cv2.rectangle(frame, (x1, 0), (x2, self.height), (255, 255, 255), 3)

@@ -12,7 +12,7 @@ class ZoomController:
         if locked:
             return
         target = float(np.interp(ratio, (self.min_ratio, self.max_ratio), (1.0, self.max_zoom)))
-        self.level += (target - self.level) * 0.2     # smoothing
+        self.level += (target - self.level) * 0.2    
 
     def apply(self, frame):
         if self.level <= 1.01:

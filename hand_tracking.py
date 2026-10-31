@@ -2,7 +2,6 @@ import math
 import cv2
 import mediapipe as mp
 
-
 class HandTracker:
     def __init__(self, max_hands=1, detection_conf=0.7, tracking_conf=0.7):
         self.mp_hands = mp.solutions.hands
@@ -42,9 +41,7 @@ class HandTracker:
             return math.hypot(lm[a][1] - lm[b][1], lm[a][2] - lm[b][2])
 
         fingers = []
-        # Thumb: tip (4) farther from pinky base (17) than the joint below it (3)
         fingers.append(1 if dist(4, 17) > dist(3, 17) else 0)
-        # Other fingers: tip (8,12,16,20) above the joint two points below it
         for tip in [8, 12, 16, 20]:
             fingers.append(1 if lm[tip][2] < lm[tip - 2][2] else 0)
         return fingers

@@ -6,7 +6,6 @@ pyautogui.PAUSE = 0
 
 
 class MediaController:
-    # fingers [index, middle, ring, pinky] -> (label, key); the thumb is ignored
     GESTURES = {
         (1, 1, 1, 1): ("Play/Pause", "playpause"),
         (1, 0, 0, 0): ("Next track", "nexttrack"),
@@ -27,12 +26,10 @@ class MediaController:
         now = time.time()
         gesture = self.GESTURES.get(tuple(fingers[1:]))
 
-        # No valid gesture, or still cooling down from the last action
         if gesture is None or now - self.last_trigger < self.cooldown:
             self.current, self.progress = None, 0
             return
 
-        # A new gesture started, so restart the hold timer
         if gesture != self.current:
             self.current, self.start = gesture, now
 
@@ -44,20 +41,17 @@ class MediaController:
             self.current, self.progress = None, 0
 
     def draw(self, frame):
-        # Legend
         for i, text in enumerate(["Open palm: Play/Pause",
                                   "Index only: Next",
                                   "Peace sign: Previous"]):
             cv2.putText(frame, text, (10, 30 + i * 28),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-        # Hold-progress bar
         if self.progress > 0:
             w = int(200 * self.progress)
             cv2.rectangle(frame, (10, 125), (210, 145), (255, 255, 255), 2)
             cv2.rectangle(frame, (10, 125), (10 + w, 145), (0, 255, 0), cv2.FILLED)
 
-        # Confirmation message for 1.5 seconds
         if time.time() - self.msg_time < 1.5 and self.message:
             cv2.putText(frame, self.message, (10, 190),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 3)

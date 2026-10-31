@@ -10,6 +10,7 @@ from mouse_control import MouseController
 from volume_control import VolumeController
 from zoom_control import ZoomController
 from media_control import MediaController
+from instructions import InstructionsPanel
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
@@ -39,6 +40,9 @@ mouse = MouseController(W, H)
 volume = VolumeController()
 zoom = ZoomController()
 media = MediaController()
+instructions = InstructionsPanel(W, H)
+cv2.namedWindow("Gesture Controller")
+cv2.setMouseCallback("Gesture Controller", instructions.on_mouse)
 
 mode = "draw"   
 canvas = None
@@ -154,6 +158,8 @@ while True:
     if time.time() - save_time < 2:
         cv2.putText(frame, save_msg, (10, frame.shape[0] - 45),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+    instructions.draw(frame)
     
     cv2.imshow("Gesture Controller", frame)
     key = cv2.waitKey(1) & 0xFF
@@ -173,6 +179,8 @@ while True:
         mode, prev = "zoom", None
     elif key == ord('p'):
         mode, prev = "media", None
+    elif key == ord('i'):
+        instructions.toggle()
     elif key == ord('s'):
             mask = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY) > 0
             if mask.any():
@@ -183,6 +191,7 @@ while True:
                 save_msg, save_time = f"Saved {name}", time.time()
             else:
                 save_msg, save_time = "Nothing to save", time.time()
+    
     
 
 cap.release()

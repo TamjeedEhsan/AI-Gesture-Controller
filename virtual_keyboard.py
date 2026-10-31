@@ -1,11 +1,10 @@
 import cv2
 
-
 class VirtualKeyboard:
     def __init__(self, frame_w, top=70, key_h=60):
         rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
         key_w = frame_w // 11
-        self.keys = []  # (label, x1, y1, x2, y2)
+        self.keys = []  
 
         for r, row in enumerate(rows):
             x0 = (frame_w - len(row) * key_w) // 2
@@ -14,7 +13,6 @@ class VirtualKeyboard:
                 x1 = x0 + i * key_w
                 self.keys.append((ch, x1, y1, x1 + key_w, y1 + key_h))
 
-        # Bottom row: SPACE and BACK
         y1 = top + 3 * key_h
         x0 = (frame_w - 7 * key_w) // 2
         self.keys.append(("SPACE", x0, y1, x0 + 5 * key_w, y1 + key_h))
@@ -23,7 +21,7 @@ class VirtualKeyboard:
         self.text = ""
         self.hover = None
         self.was_pinching = False
-        self.flash = 0  # frames of "pressed" feedback
+        self.flash = 0  
 
     def _key_at(self, x, y):
         for label, x1, y1, x2, y2 in self.keys:
@@ -43,7 +41,6 @@ class VirtualKeyboard:
         if not pinching:
             self.hover = self._key_at(x, y)
         elif not self.was_pinching and self.hover:
-            # Pinch just started: press the key we were hovering
             self._press(self.hover)
             self.flash = 6
         self.was_pinching = pinching
@@ -62,7 +59,6 @@ class VirtualKeyboard:
             cv2.putText(frame, label, (x1 + 8, y1 + 38),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-        # Text box at the top
         cv2.rectangle(frame, (0, 0), (frame.shape[1], 50), (40, 40, 40), cv2.FILLED)
         cv2.putText(frame, self.text[-30:] + "|", (10, 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
